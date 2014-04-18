@@ -13,29 +13,38 @@ $.fn.sortable = function(options) {
 		connectWith: false
 	}, options);
 	return this.each(function() {
+		var items;
 		if (/^enable|disable|destroy$/.test(method)) {
-			var items = $(this).children($(this).data('items')).attr('draggable', method == 'enable');
+			items = $(this).children($(this).data('items')).attr('draggable', method == 'enable');
 			if (method == 'destroy') {
 				items.add(this).removeData('connectWith items')
 					.off('dragstart.h5s dragend.h5s selectstart.h5s dragover.h5s dragenter.h5s drop.h5s');
 			}
 			return;
 		}
-		var isHandle, index, items = $(this).children(options.items);
-		var placeholder = $('<' + (/^ul|ol$/i.test(this.tagName) ? 'li' : 'div') + ' class="sortable-placeholder">');
+		var isHandle, index, isTable = (/^table|tbody$/i.test(this.tagName));
+		items = $(this).children(options.items);
+		var placeholder = $('<' + (/^ul|ol$/i.test(this.tagName) ? 'li' : (isTable ? 'tr' : 'div')) + ' class="sortable-placeholder">');
+
+		if (isTable) {
+			var placeholderTd = $('<td>&nbsp;</td>').appendTo(placeholder);
+			if (items.length > 0 ) {
+				placeholderTd.attr('colspan', $(items[0]).children().length);
+			}
+		}
 		items.find(options.handle).mousedown(function() {
 			isHandle = true;
 		}).mouseup(function() {
 			isHandle = false;
 		});
-		$(this).data('items', options.items)
+		$(this).data('items', options.items);
 		placeholders = placeholders.add(placeholder);
 		if (options.connectWith) {
 			$(options.connectWith).add(this).data('connectWith', options.connectWith);
 		}
 		items.attr('draggable', 'true').on('dragstart.h5s', function(e) {
 			if (options.handle && !isHandle) {
-				return false;
+				return;
 			}
 			isHandle = false;
 			var dt = e.originalEvent.dataTransfer;
